@@ -1,4 +1,4 @@
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 import openpyxl
 from dataclasses import dataclass, field
 from selenium import webdriver
@@ -6,14 +6,23 @@ import datetime
 from selenium.webdriver.common.by import By
 import sys
 
-# Open workbook and set current sheet
+# Check for arguement from cmdline
 try:
     FILENAME = sys.argv[1]
 except IndexError:
     FILENAME = "Geoguessr.xlsx"
-
-workbook = load_workbook(filename=FILENAME)
-sheet = workbook.active
+    
+# Open workbook and set current sheet
+try:
+    workbook = load_workbook(filename=FILENAME)
+    sheet = workbook.active
+except FileNotFoundError:
+    c=input(f"{FILENAME} not found! would you like to create it? Y/n ")
+    if input == "n":
+        quit()
+    else:
+        workbook = Workbook()
+        sheet = workbook.active
 
 @dataclass
 class Results:
@@ -91,6 +100,7 @@ def add_score_to_sheet(results, game_title):
     # Max title length in excel is 31
     if len(game_title) > 31:
         game_title = game_title[:30]
+        print(f"[WARNING] Title too long! Title has been shortened to {game_title}")
 
     # Switch to appropriate sheet
     if game_title in workbook.sheetnames:
@@ -98,7 +108,7 @@ def add_score_to_sheet(results, game_title):
 
     # Create sheet if one doesn't exist
     else:
-        print(f"\n[WARNING] No sheet with title {game_title}. Creating...")
+        print(f"[WARNING] No sheet with title {game_title}. Creating...")
         workbook.create_sheet(game_title)
         sheet = workbook[game_title]
 
@@ -124,9 +134,11 @@ def add_score_to_sheet(results, game_title):
         sheet["S3"].number_format = u"mm:ss"
         
     ### Find next empty row in sheet and add the data in ###
-    next_row = find_next_empty_row(sheet)
-    attempt_number = next_row - 2
-    sheet[f"B{results.row}"] = attempt_number
+    results.row = find_next_empty_row(sheet)
+    results.attempt_num = results.row - 2
+
+    # Attempt Number
+    sheet[f"B{results.row}"] = results.attempt_num
     
     # Times
     for i, n in enumerate(range(67, 72)):
@@ -158,15 +170,19 @@ def add_score_to_sheet(results, game_title):
 def main():
     url = input("Please enter the results URL (type quit to exit): ")
     while url != "quit":
-        results = Results(url)
-        totals, scores, dists, times, game_title = get_score_from_url(url)
-        results.total_score = totals[0]
-        results.total_distance = totals[1]
-        results.total_time = totals[2]
-        results.round_scores = scores
-        results.round_distances = dists
-        results.round_times = times
-        add_score_to_sheet(results, game_title)
+        if "results" in url:
+            results = Results(url)
+            totals, scores, dists, times, game_title = get_score_from_url(url)
+            results.total_score = totals[0]
+            results.total_distance = totals[1]
+            results.total_time = totals[2]
+            results.round_scores = scores
+            results.round_distances = dists
+            results.round_times = times
+            add_score_to_sheet(results, game_title)
+
+        else:
+            print(f"[ERROR] Provided URL [{url}] is not a valid results URL!")
             
         url = input("Please enter the results URL (type quit to exit): ")
 
