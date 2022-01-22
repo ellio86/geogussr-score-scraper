@@ -3,7 +3,6 @@ import openpyxl
 from dataclasses import dataclass, field
 from selenium import webdriver
 import datetime
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 import sys
 
@@ -124,11 +123,11 @@ def add_score_to_sheet(results, game_title):
         sheet["S3"] = "=AVERAGE(O:O)"
         sheet["S3"].number_format = u"mm:ss"
         
-    # Find next empty row in sheet and add the data in
+    ### Find next empty row in sheet and add the data in ###
     next_row = find_next_empty_row(sheet)
     attempt_number = next_row - 2
     sheet[f"B{results.row}"] = attempt_number
-
+    
     # Times
     for i, n in enumerate(range(67, 72)):
         try:
@@ -138,7 +137,7 @@ def add_score_to_sheet(results, game_title):
         time = datetime.time(minute=int(minute), second=int(second))
         sheet[f"{chr(n)}{results.row}"] = time
         sheet[f"{chr(n)}{results.row}"].number_format = u"mm:ss"
-
+        
     # Scores
     for i, n in enumerate(range(73, 78)):
         sheet[f"{chr(n)}{results.row}"] = results.round_scores[i]
