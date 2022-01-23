@@ -3,6 +3,7 @@ import openpyxl
 from dataclasses import dataclass, field
 from selenium import webdriver
 import datetime
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import sys
 
@@ -56,7 +57,8 @@ def find_next_empty_row(sheet, starting_row=2, col=2):
 
 def get_score_from_url(url):
     """ Scrapes info from geoguessr using selenium. """
-    driver=webdriver.Chrome()
+    options = Options()
+    driver=webdriver.Chrome(options=options)
     driver.maximize_window()
     driver.get(url)
 
@@ -95,6 +97,29 @@ def get_score_from_url(url):
 
     return ((total_score, total_dist, total_time)), score_list, dist_list, time_list, game_title
 
+def create_sheet(title):
+    """ Create a new sheet with title that contains the necessary headings """
+    workbook.create_sheet(title)
+    sheet = workbook[title]
+
+    # Set the width of the columns
+    for n in range(66, 82):
+        sheet.column_dimensions[chr(n)].width = 0.5 if n == 72 else 55 if n == 81 else 14
+
+    # Populate headings
+    sheet["B2"] = "Attempt #"
+    for n in range(1, 6):
+        sheet[f"{chr(66 + n)}2"] = f"Round {n} Time"
+        sheet[f"{chr(72 + n)}2"] = f"Round {n} Score"
+    sheet["N2"] = "Total Score"
+    sheet["O2"] = "Total Time"
+    sheet["P2"] = "Vs. Average"
+    sheet["Q2"] = "Link"
+    sheet["S3"] = "=AVERAGE(O:O)"
+    sheet["S3"].number_format = u"mm:ss"
+    
+    return sheet
+
 def add_score_to_sheet(results, game_title):
     """ Add score data to the {game_title} spreadsheet """
     # Max title length in excel is 31
@@ -108,30 +133,8 @@ def add_score_to_sheet(results, game_title):
 
     # Create sheet if one doesn't exist
     else:
-        print(f"[WARNING] No sheet with title {game_title}. Creating...")
-        workbook.create_sheet(game_title)
-        sheet = workbook[game_title]
-
-        # Set the width of the columns
-        for n in range(66, 81):
-            if n == 72:
-                pass
-            else:
-                sheet.column_dimensions[chr(n)].width = 14
-        sheet.column_dimensions["H"].width = 0.5
-        sheet.column_dimensions["Q"].width = 55
-
-        # Populate headings
-        sheet["B2"] = "Attempt #"
-        for n in range(1, 6):
-            sheet[f"{chr(66 + n)}2"] = f"Round {n} Time"
-            sheet[f"{chr(72 + n)}2"] = f"Round {n} Score"
-        sheet["N2"] = "Total Score"
-        sheet["O2"] = "Total Time"
-        sheet["P2"] = "Vs. Average"
-        sheet["Q2"] = "Link"
-        sheet["S3"] = "=AVERAGE(O:O)"
-        sheet["S3"].number_format = u"mm:ss"
+        print(f"\n[WARNING] No sheet with title {game_title}. Creating...")
+        sheet = create_sheet(game_title)
         
     ### Find next empty row in sheet and add the data in ###
     results.row = find_next_empty_row(sheet)
@@ -154,7 +157,7 @@ def add_score_to_sheet(results, game_title):
     for i, n in enumerate(range(73, 78)):
         sheet[f"{chr(n)}{results.row}"] = results.round_scores[i]
 
-    # Totals, vs average and link sections
+    # Totals, vs average and link columns
     sheet[f"N{results.row}"] = f"=SUM(I{results.row}:M{results.row})"
     sheet[f"O{results.row}"] = f"=SUM(C{results.row}:G{results.row})"
     sheet[f"P{results.row}"] = f"=O{results.row}-$S$3"
@@ -170,19 +173,15 @@ def add_score_to_sheet(results, game_title):
 def main():
     url = input("Please enter the results URL (type quit to exit): ")
     while url != "quit":
-        if "results" in url:
-            results = Results(url)
-            totals, scores, dists, times, game_title = get_score_from_url(url)
-            results.total_score = totals[0]
-            results.total_distance = totals[1]
-            results.total_time = totals[2]
-            results.round_scores = scores
-            results.round_distances = dists
-            results.round_times = times
-            add_score_to_sheet(results, game_title)
-
-        else:
-            print(f"[ERROR] Provided URL [{url}] is not a valid results URL!")
+        results = Results(url)
+        totals, scores, dists, times, game_title = get_score_from_url(url)
+        results.total_score = totals[0]
+        results.total_distance = totals[1]
+        results.total_time = totals[2]
+        results.round_scores = scores
+        results.round_distances = dists
+        results.round_times = times
+        add_score_to_sheet(results, game_title)
             
         url = input("Please enter the results URL (type quit to exit): ")
 
