@@ -103,7 +103,7 @@ def create_sheet(title):
     sheet = workbook[title]
 
     # Set the width of the columns
-    for n in range(66, 82):
+    for n in range(66, 82): #                       "I"                "Q"
         sheet.column_dimensions[chr(n)].width = 0.5 if n == 72 else 55 if n == 81 else 14
 
     # Populate headings
@@ -143,19 +143,17 @@ def add_score_to_sheet(results, game_title):
     # Attempt Number
     sheet[f"B{results.row}"] = results.attempt_num
     
-    # Times
+    # Times & Scores
     for i, n in enumerate(range(67, 72)):
         try:
             minute, second = results.round_times[i].split(":")
         except ValueError:
             minute = 0; second = results.round_times[i]
         time = datetime.time(minute=int(minute), second=int(second))
+        
         sheet[f"{chr(n)}{results.row}"] = time
         sheet[f"{chr(n)}{results.row}"].number_format = u"mm:ss"
-        
-    # Scores
-    for i, n in enumerate(range(73, 78)):
-        sheet[f"{chr(n)}{results.row}"] = results.round_scores[i]
+        sheet[f"{chr(n+6)}{results.row}"] = results.round_scores[i]
 
     # Totals, vs average and link columns
     sheet[f"N{results.row}"] = f"=SUM(I{results.row}:M{results.row})"
@@ -169,6 +167,7 @@ def add_score_to_sheet(results, game_title):
     # There is negative time on the spreadsheet so 1904 date system used
     workbook.epoch = openpyxl.utils.datetime.CALENDAR_MAC_1904
     workbook.save(filename=FILENAME)
+    print("[INFO] Workbook saved!")
 
 def main():
     url = input("Please enter the results URL (type quit to exit): ")
