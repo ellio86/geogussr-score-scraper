@@ -1,10 +1,4 @@
 # Geoguessr Score Scraper
-**Paste in your results link to the script and it will scrape the data from the page and automatically add it to a spreadsheet**
+**On the commandline, use the first argument to specify the results url, the results will be returned, formatted as a JSON object.**
 
-The scraper uses the selenium chrome driver to open a browser and find the appropriate data. The script will also create new sheets
-for any game that does not yet have any times stored. 
-
-Note: you can specify what sheet to use as an argument in the command line.
-`python score-scraper.py my_spreadsheet.xlsx`
-
-The default sheet is 'Geoguessr.xlsx'.
+The scraper uses the selenium chrome driver to open a browser and find the appropriate data. The purpose of this is as a module for a web app that I'm working on. This program is run in the backend and the data is served to users in a HTML frontend.
