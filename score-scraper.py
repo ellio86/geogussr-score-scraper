@@ -31,11 +31,11 @@ class Results:
     row: int = 0
     attempt_num: int = 0
     round_scores: list[int] = field(default_factory=list)
-    round_distances: list[int] = field(default_factory=list)
+    round_distances: list[str] = field(default_factory=list)
     round_times: list[str] = field(default_factory=list)
     total_time : str = ""
     total_score: int = 0
-    total_distance: int = 0
+    total_distance: str = ""
 
 def find_next_empty_row(sheet, starting_row=2, col=2):
     """ Finds the next row for the times and scores to be added to """
@@ -64,9 +64,9 @@ def get_score_from_url(url):
 
     # Find elements by class on the webpage
     driver.implicitly_wait(1)
-    scores = driver.find_elements(By.CLASS_NAME, "results-highscore__guess-cell-score")
-    details = driver.find_elements(By.CLASS_NAME, "results-highscore__guess-cell-details")
-    game_title = driver.find_element(By.CLASS_NAME, "result-info-card__title").text
+    scores = driver.find_elements(By.CSS_SELECTOR, "[class*=results_score__]")
+    details = driver.find_elements(By.CSS_SELECTOR, "[class*=results_scoreDetails__]")
+    game_title = driver.find_element(By.CSS_SELECTOR, "[class*=info-card_title__]").text
     
     
     # Parse Text
